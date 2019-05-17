@@ -34,7 +34,11 @@ function advance() {
         });
 }
 
-setInterval(advance, 15000);
+const intervalId = setInterval(advance, 2000);
+
+function stop() {
+    clearInterval(intervalId);
+}
 
 advance();
 advance();

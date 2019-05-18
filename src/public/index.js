@@ -34,7 +34,7 @@ function advance() {
         });
 }
 
-const intervalId = setInterval(advance, 2000);
+const intervalId = setInterval(advance, 15000);
 
 function stop() {
     clearInterval(intervalId);

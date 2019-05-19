@@ -1,9 +1,9 @@
-let current = null;
-let next = null;
+var current = null;
+var next = null;
 
 function preloadImage(imageId) {
-    const el = document.createElement('div');
-    el.style = `background-image: url(/api/image/${imageId})`;
+    var el = document.createElement('div');
+    el.style.backgroundImage = 'url(/api/image/' + imageId + ')';
     el.className = 'slide next';
 
     document.body.appendChild(el);
@@ -24,21 +24,31 @@ function deactivate(el) {
 }
 
 function advance() {
-    fetch('/api/next')
-        .then((resp) => resp.json())
-        .then((result) => {
-            activate(next);
-            deactivate(current);
-            current = next;
-            next = preloadImage(result.value);
-        });
+    var oReq = new XMLHttpRequest();
+    oReq.onload = function (e) {
+        var result = e.target.response;
+
+        activate(next);
+        deactivate(current);
+
+        current = next;
+        next = preloadImage(result.value);
+    };
+    oReq.open('GET', '/api/next?b=' + Date.now(), true);
+    oReq.responseType = 'json';
+    oReq.send();
 }
 
-const intervalId = setInterval(advance, 15000);
+var intervalId;
 
 function stop() {
     clearInterval(intervalId);
 }
 
-advance();
-advance();
+window.onload = function() {
+    intervalId = setInterval(advance, 5000);
+
+    next = document.getElementById('init');
+    advance();
+    advance();
+};

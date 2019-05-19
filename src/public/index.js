@@ -23,20 +23,27 @@ function deactivate(el) {
     }
 }
 
-function advance() {
+function request(api, callback) {
     var oReq = new XMLHttpRequest();
     oReq.onload = function (e) {
-        var result = e.target.response;
-
-        activate(next);
-        deactivate(current);
-
-        current = next;
-        next = preloadImage(result.value);
+        callback(e.target.response);
     };
-    oReq.open('GET', '/api/next?b=' + Date.now(), true);
+    oReq.open('GET', '/api/' + api + '?b=' + Date.now(), true);
     oReq.responseType = 'json';
     oReq.send();
+}
+
+function advance() {
+    request(
+        'next',
+        function (result) {
+            activate(next);
+            deactivate(current);
+
+            current = next;
+            next = preloadImage(result.value);
+        }
+    );
 }
 
 var intervalId;

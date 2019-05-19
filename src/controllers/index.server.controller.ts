@@ -23,6 +23,8 @@ function randomIndex(length: number) {
     return Math.floor(Math.random() * length);
 }
 
+// TODO: create a playlist per connection/session, to guarantee
+// good independent shuffling for multiple clients.
 let playlist: string[] = shuffle(fileToId);
 let index = 0;
 

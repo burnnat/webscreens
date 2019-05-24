@@ -7,7 +7,11 @@ import { generate } from 'shortid';
 
 import config from '../config/config';
 
-const filepattern = path.join(config.slides, '**/*.jpg');
+const source = path.resolve(config.slides);
+
+console.log(`Loading slideshow from directory: ${source}`);
+
+const filepattern = path.join(source, '**/*.jpg');
 
 const fileToId = {};
 const idToFile = {};

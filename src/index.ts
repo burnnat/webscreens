@@ -15,6 +15,6 @@ export function start() {
   });
 
   server.on('listening', () => {
-    console.log(`Server started on port ${config.port} on env ${process.env.NODE_ENV || 'dev'}`);
+    console.log(`Server started on port ${config.port}`);
   });
 }

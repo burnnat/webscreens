@@ -14,7 +14,8 @@
     "test": "mocha -r ts-node/register -w ./spec/**/*.spec.ts",
     "build": "tsc -p src",
     "start": "node index.js",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "postversion": "git push && git push --tags"
   },
   "dependencies": {
     "body-parser": "^1.13.3",

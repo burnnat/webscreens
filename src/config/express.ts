@@ -5,7 +5,7 @@ import * as express from 'express';
 import * as logger from 'morgan';
 import * as path from 'path';
 
-export default function () {
+export default function() {
     var app: express.Express = express();
 
     app.use(logger('dev'));

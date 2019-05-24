@@ -1,15 +1,19 @@
 {
   "name": "simple-slides",
   "version": "0.0.1",
-  "private": true,
+  "files": [
+    "dist",
+    "index.js"
+  ],
   "scripts": {
-    "dev": "concurrently --kill-others \"tsc -w -p src\" \"nodemon dist/index.js -e ts\"",
-    "serve": "concurrently --kill-others \"tsc -p src\" \"node dist/index.js\"",
-    "debug": "concurrently --kill-others \"tsc -w -p src\" \"nodemon --inspect dist/index.js -e ts\"",
+    "dev": "concurrently --kill-others \"tsc -w -p src\" \"nodemon index.js -e ts\"",
+    "serve": "concurrently --kill-others \"tsc -p src\" \"node index.js\"",
+    "debug": "concurrently --kill-others \"tsc -w -p src\" \"nodemon --inspect index.js -e ts\"",
     "test:watch": "mocha -r ts-node/register -w ./spec/**/*.spec.ts --watch-extensions ts",
     "test": "mocha -r ts-node/register -w ./spec/**/*.spec.ts",
     "build": "tsc -p src",
-    "start": "node dist/index.js"
+    "start": "node index.js",
+    "prepublish": "npm run build"
   },
   "dependencies": {
     "body-parser": "^1.13.3",

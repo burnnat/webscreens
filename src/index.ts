@@ -1,16 +1,20 @@
 import * as http from 'http';
+
+import express from './config/express';
 import config from './config/config';
 
-const app = require('./config/express').default();
+export function start() {
+  const app = express();
 
-const server: http.Server = new http.Server(app);
+  const server: http.Server = new http.Server(app);
 
-server.listen(config.port);
+  server.listen(config.port);
 
-server.on('error', (e: Error) => {
-  console.log('Error starting server' + e);
-});
+  server.on('error', (e: Error) => {
+    console.log('Error starting server' + e);
+  });
 
-server.on('listening', () => {
-  console.log(`Server started on port ${config.port} on env ${process.env.NODE_ENV || 'dev'}`);
-});
+  server.on('listening', () => {
+    console.log(`Server started on port ${config.port} on env ${process.env.NODE_ENV || 'dev'}`);
+  });
+}

@@ -1,7 +1,7 @@
+import * as path from 'path';
 import { sync } from 'glob';
 import { union } from 'lodash';
 import * as yargs from 'yargs'
-import { Argv } from 'yargs';
 
 let argv =  yargs
 	.option('p', {
@@ -22,8 +22,7 @@ let argv =  yargs
 export default class Config {
 	public static port: number = argv.p;
 	public static slides: string = argv.d;
-	public static routes: string = './dist/routes/**/*.js';
-	public static models: string = './dist/models/**/*.js';
+	public static routes: string = path.join(__dirname, '../routes/**/*.js');
 	public static globFiles(location: string): string[] {
 		return union([], sync(location));
 	}

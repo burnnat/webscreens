@@ -16,7 +16,7 @@ const filepattern = path.join(source, '**/*.jpg');
 const fileToId = {};
 const idToFile = {};
 
-sync(filepattern).forEach((filename) => {
+sync(filepattern, { nocase: true }).forEach((filename) => {
     const id = generate();
 
     fileToId[filename] = id;
@@ -88,7 +88,11 @@ export default class IndexController {
             }
         }
 
-        res.json({ value: playlist[index] });
+        const id = playlist[index];
+        const file = idToFile[id];
+
+        console.log(`Next image: ${id} (${file})`);
+        res.json({ value: id });
     }
 
     public image(req: Request, res: Response): void {

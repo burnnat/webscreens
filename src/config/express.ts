@@ -12,7 +12,7 @@ export default function() {
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(cookieParser());
-    app.use(express.static(path.join(__dirname, '../../src/public')));
+    app.use(express.static(path.join(__dirname, '../../public')));
 
     for (let route of config.globFiles(config.routes)) {
         require(path.resolve(route)).default(app);

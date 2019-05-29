@@ -8,10 +8,54 @@ function getUrlParameter(name) {
     return results === null ? null : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
+function center(viewportSize, imageSize) {
+    var position = Math.max(
+        Math.min(
+            Math.floor((viewportSize - imageSize) / 2),
+            viewportSize
+        ),
+        0
+    );
+
+    return position + 'px';
+}
+
 function preloadImage(imageId) {
-    var el = document.createElement('div');
-    el.style.backgroundImage = 'url(/api/image/' + imageId + ')';
+    var el = new Image();
     el.className = 'slide next';
+
+    el.onload = function() {
+        var viewWidth = window.innerWidth;
+        var imgWidth = el.width;
+
+        var viewHeight = window.innerHeight;
+        var imgHeight = el.height;
+
+        if (imgWidth < viewWidth && imgHeight < viewHeight) {
+            // No scaling needed, just center.
+            el.style.left = center(viewWidth, imgWidth);
+            el.style.top = center(viewHeight, imgHeight);
+        }
+        else {
+            var horizScale = imgWidth / viewWidth;
+            var vertScale = imgHeight / viewHeight;
+
+            if (horizScale > vertScale) {
+                // Scale horizontally to fit.
+                el.width = viewWidth;
+                el.style.left = 0;
+                el.style.top = center(viewHeight, imgHeight / horizScale);
+            }
+            else {
+                // Scale vertically to fit.
+                el.height = viewHeight;
+                el.style.left = center(viewWidth, imgWidth / vertScale);
+                el.style.top = 0;
+            }
+        }
+    }
+
+    el.src = '/api/image/' + imageId;
 
     document.body.appendChild(el);
 

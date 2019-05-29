@@ -2,6 +2,7 @@ import * as path from 'path';
 import { Request, Response } from 'express';
 import * as gaze from 'gaze';
 import { sync } from 'glob';
+import * as jo from 'jpeg-autorotate';
 import { keys, shuffle, transform } from 'lodash';
 import { generate } from 'shortid';
 
@@ -91,12 +92,32 @@ export default class IndexController {
         const id = playlist[index];
         const file = idToFile[id];
 
-        console.log(`Next image: ${id} (${file})`);
+        console.log(`Next image: ${id} (${file})`);                                                                                                                                                    
         res.json({ value: id });
     }
 
     public image(req: Request, res: Response): void {
-        res.sendFile(idToFile[req.params.id]);
+        const id = req.params.id;
+        const file = idToFile[id];
+        
+        jo.rotate(
+            file,
+            {},
+            (error, buffer, orientation, dimensions, quality) => {
+                if (error) {
+                    if (error.code !== jo.errors.correct_orientation && error.code !== jo.errors.no_orientation) {
+                        console.error(`An error occurred when rotating the file '${id}': ${error.message}`);
+                    }
+
+                    // If we can't rotate for some reason (maybe the file is already rotated), just send as-is.
+                    res.sendFile(file);
+                }
+                else {
+                    res.contentType('image/jpeg');
+                    res.send(buffer);
+                }
+            }
+        );
     }
 }
 

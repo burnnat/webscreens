@@ -42,13 +42,13 @@ function preloadImage(imageId) {
 
             if (horizScale > vertScale) {
                 // Scale horizontally to fit.
-                el.width = viewWidth;
+                el.style.width = viewWidth + 'px';
                 el.style.left = 0;
                 el.style.top = center(viewHeight, imgHeight / horizScale);
             }
             else {
                 // Scale vertically to fit.
-                el.height = viewHeight;
+                el.style.height = viewHeight + 'px';
                 el.style.left = center(viewWidth, imgWidth / vertScale);
                 el.style.top = 0;
             }

@@ -2,8 +2,7 @@ import * as path from 'path';
 import { Request, Response } from 'express';
 import * as gaze from 'gaze';
 import { sync } from 'glob';
-import * as imageSize from 'image-size';
-import * as jo from 'jpeg-autorotate';
+import * as sharp from 'sharp';
 import { keys, shuffle, transform } from 'lodash';
 import { generate } from 'shortid';
 
@@ -29,7 +28,7 @@ function randomIndex(length: number) {
     return Math.floor(Math.random() * length);
 }
 
-// TODO: create a playlist per connection/session, to guarantee
+// TODO (#2): create a playlist per connection/session, to guarantee
 // good independent shuffling for multiple clients.
 let playlist: string[] = shuffle(fileToId);
 let index = 0;
@@ -97,108 +96,79 @@ function nextImage(): string {
     return id;
 }
 
-function center(viewportSize, imageSize) {
-    var position = Math.max(
-        Math.min(
-            Math.floor((viewportSize - imageSize) / 2),
-            viewportSize
-        ),
-        0
-    );
-
-    return position + 'px';
-}
-
 export default class ImagesController {
     public next(req: Request, res: Response): void {
         res.json({ value: nextImage() });
     }
 
-    public image(req: Request, res: Response): void {
+    public async image(req: Request, res: Response): Promise<void> {
         const id = req.params.id;
         const file = idToFile[id];
 
-        jo.rotate(
-            file,
-            {},
-            (error, buffer, orientation, dimensions, quality) => {
-                if (error) {
-                    if (error.code !== jo.errors.correct_orientation && error.code !== jo.errors.no_orientation) {
-                        console.error(`An error occurred when rotating the file '${id}': ${error.message}`);
-                    }
+        try {
+            const buffer = await sharp(file)
+                .rotate()
+                .jpeg()
+                .toBuffer();
 
-                    // If we can't rotate for some reason (maybe the file is already rotated), just send as-is.
-                    res.sendFile(file);
-                }
-                else {
-                    res.contentType('image/jpeg');
-                    res.send(buffer);
-                }
-            }
-        );
+            res.contentType('image/jpeg');
+            res.send(buffer);
+        }
+        catch (error) {
+            console.error(`An error occurred when rotating the file '${id}': ${error}`);
+
+            // If we can't rotate for some reason just send the file as-is.
+            res.sendFile(file);
+        }
     }
 
-    public indexStatic(req: Request, res: Response): void {
-        const viewWidth = parseInt(req.param('width'), 10);
-        const viewHeight = parseInt(req.param('height'), 10);
+    public async indexStatic(req: Request, res: Response): Promise<void> {
+        const width = parseInt(req.query.width, 10);
+        const height = parseInt(req.query.height, 10);
 
         const id = nextImage();
         const file = idToFile[id];
 
-        jo.rotate(
-            file,
-            { quality: 85 },
-            (error, buffer, orientation, rotatedDimensions, quality) => {
-                let dimensions;
+        try {
+            const img = await sharp(file)
+                .rotate()
+                .resize({
+                    width,
+                    height,
+                    fit: 'inside',
+                    withoutEnlargement: true
+                })
+                .raw()
+                .toBuffer({
+                    resolveWithObject: true
+                });
 
-                if (error) {
-                    dimensions = imageSize(file)
-                }
-                else {
-                    dimensions = rotatedDimensions;
-                }
-
-                let imgWidth = dimensions.width;
-                let imgHeight = dimensions.height;
-                
-                let width = 'auto';
-                let height = 'auto';
-                let left = '0';
-                let top = '0';
-
-                if (imgWidth < viewWidth && imgHeight < viewHeight) {
-                    // No scaling needed, just center.
-                    left = center(viewWidth, imgWidth);
-                    top = center(viewHeight, imgHeight);
-                }
-                else {
-                    var horizScale = imgWidth / viewWidth;
-                    var vertScale = imgHeight / viewHeight;
-
-                    if (horizScale > vertScale) {
-                        // Scale horizontally to fit.
-                        width = viewWidth + 'px';
-                        top = center(viewHeight, imgHeight / horizScale);
-                    }
-                    else {
-                        // Scale vertically to fit.
-                        height = viewHeight + 'px';
-                        left = center(viewWidth, imgWidth / vertScale);
-                    }
-                }
-
-                res.render(
-                    'static.html',
-                    {
+            const composite = await sharp({
+                    create: {
                         width,
                         height,
-                        left,
-                        top,
-                        image: id
+                        channels: 3,
+                        background: '#111'
                     }
-                );
-            }
-        );
+                })
+                .composite([
+                    {
+                        input: img.data,
+                        raw: img.info
+                    }
+                ])
+                .jpeg()
+                .toBuffer();
+            
+            res.contentType('image/jpeg');
+            res.send(composite);
+        }
+        catch (error) {
+            console.error(`An error occurred when resizing the file '${id}': ${error}`);
+
+            // If we can't rotate/resize for some reason just send the file as-is.
+            res.sendFile(file);
+        }
     }
 }
 

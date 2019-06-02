@@ -21,7 +21,7 @@
     "test": "mocha -r ts-node/register -w ./spec/**/*.spec.ts",
     "clean": "rm -r dist",
     "build": "npm run clean && tsc -p src",
-    "start": "node index.js",
+    "start": "node index.js --config config.json",
     "prepublish": "npm run build",
     "postversion": "git push && git push --tags"
   },

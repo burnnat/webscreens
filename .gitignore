@@ -32,6 +32,7 @@ typings/
 # dotenv environment variables file
 .env
 
-# Resources directories
+# Resources directories, local configuration
 dist/
 sample/
+config.json

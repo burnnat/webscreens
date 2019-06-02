@@ -1,6 +1,6 @@
 {
   "name": "simple-slides",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Display a simple web slideshow from a directory tree of images.",
   "license": "GPL-3.0",
   "repository": {

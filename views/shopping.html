@@ -2,8 +2,26 @@
 <html>
     <head>
         <title>Shopping List</title>
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+        <link rel="stylesheet" href="styles.css"/>
     </head>
     <body>
-        {{ content }}
+        <div class="container">
+            {{#lists}}
+                <div class="card">
+                    <div class="title">
+                        <h2>{{name}}</h2>
+                    </div>
+                    <div class="list">
+                        <ul>
+                            {{#items}}
+                                <li>{{.}}</li>
+                            {{/items}}
+                        </ul>
+                    </div>
+                </div>
+            {{/lists}}
+        </div>
     </body>
 </html> 

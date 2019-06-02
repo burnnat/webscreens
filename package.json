@@ -39,6 +39,7 @@
     "morgan": "^1.6.1",
     "mustache-express": "^1.2.8",
     "negotiator": "^0.6.1",
+    "our-groceries-client": "^0.1.65-pre",
     "pug": "^2.0.3",
     "serve-favicon": "^2.5.0",
     "sharp": "^0.22.1",

@@ -1,5 +1,9 @@
 @import '../common/styles.css';
 
+.slide {
+  position: absolute;
+}
+
 .loading {
   color: white;
   font-size: 32px;

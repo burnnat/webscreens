@@ -1,11 +1,11 @@
 {
-  "name": "simple-slides",
+  "name": "webscreens",
   "version": "0.0.7",
-  "description": "Display a simple web slideshow from a directory tree of images.",
+  "description": "Display simple web slideshows and dashboards intended for full screen display.",
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/burnnat/simple-slides.git"
+    "url": "https://github.com/burnnat/webscreens.git"
   },
   "files": [
     "dist",

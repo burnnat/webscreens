@@ -14,13 +14,9 @@
     "index.js"
   ],
   "scripts": {
-    "dev": "concurrently --kill-others \"tsc -w -p src\" \"nodemon index.js -e ts\"",
-    "serve": "concurrently --kill-others \"tsc -p src\" \"node index.js\"",
-    "debug": "concurrently --kill-others \"tsc -w -p src\" \"nodemon --inspect index.js -e ts\"",
-    "test:watch": "mocha -r ts-node/register -w ./spec/**/*.spec.ts --watch-extensions ts",
     "test": "mocha -r ts-node/register -w ./spec/**/*.spec.ts",
-    "clean": "rm -r dist",
-    "build": "npm run clean && tsc -p src",
+    "clean": "rm -rf dist public/deps",
+    "build": "npm run clean && ./copy-resources.sh && tsc -p src",
     "start": "node index.js --config config.json",
     "prepublish": "npm run build",
     "postversion": "git push && git push --tags"
@@ -37,6 +33,7 @@
     "lodash": "^4.17.15",
     "mongoose": "^4.11.1",
     "morgan": "^1.6.1",
+    "moveto": "^1.8.2",
     "mustache-express": "^1.2.8",
     "negotiator": "^0.6.1",
     "our-groceries-client": "^0.1.65-pre",

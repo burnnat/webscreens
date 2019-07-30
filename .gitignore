@@ -35,4 +35,5 @@ typings/
 # Resources directories, local configuration
 dist/
 sample/
+public/deps/
 config.json

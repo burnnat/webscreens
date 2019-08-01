@@ -12,13 +12,13 @@ export default function() {
     app.engine('html', mustacheExpress());
 
     app.set('view engine', 'html');
-    app.set('views', path.resolve(__dirname, '../../views'));
+    app.set('views', config.views);
 
     app.use(logger('dev'));
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(cookieParser());
-    app.use(express.static(path.resolve(__dirname, '../../public')));
+    app.use(express.static(config.resources));
 
     console.log('Loading routes...');
 

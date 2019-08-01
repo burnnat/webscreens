@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import config from '../config/config';
+import config from '../../config/config';
 import * as OurGroceriesClient from 'our-groceries-client';
 
 function customPromisify(object, key) {

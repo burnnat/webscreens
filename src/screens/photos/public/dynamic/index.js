@@ -55,7 +55,7 @@ function preloadImage(imageId) {
         }
     }
 
-    el.src = '/api/image/' + imageId;
+    el.src = '../api/image/' + imageId;
 
     document.body.appendChild(el);
 
@@ -79,7 +79,7 @@ function request(api, callback) {
     oReq.onload = function (e) {
         callback(e.target.response);
     };
-    oReq.open('GET', '/api/' + api + '?b=' + Date.now(), true);
+    oReq.open('GET', '../api/' + api + '?b=' + Date.now(), true);
     oReq.responseType = 'json';
     oReq.send();
 }

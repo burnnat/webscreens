@@ -1,5 +1,5 @@
 import { Express } from 'express';
-import { shoppingController } from '../controllers/shopping.server.controller';
+import { shoppingController } from './controller';
 
 export default class ShoppingRoute {
 	constructor(app: Express) {

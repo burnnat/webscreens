@@ -6,7 +6,7 @@ import * as sharp from 'sharp';
 import { keys, shuffle, transform } from 'lodash';
 import { generate } from 'shortid';
 
-import config from '../config/config';
+import config from '../../config/config';
 
 const source = path.resolve(config.slides);
 

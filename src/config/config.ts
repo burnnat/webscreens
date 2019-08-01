@@ -30,12 +30,16 @@ let argv =  yargs
 	.help()
 	.argv;
 
+const relative = (location) => path.join(__dirname, location);
+
 export default class Config {
 	public static port: number = argv.b;
 	public static slides: string = argv.d;
 	public static username: string = argv.u;
 	public static password: string = argv.p;
-	public static routes: string = path.join(__dirname, '../routes/**/*.js');
+	public static resources = relative('../public/');
+	public static views = relative('../views/');
+	public static routes = relative('../screens/*/routes.js');
 	public static globFiles(location: string): string[] {
 		return union([], sync(location));
 	}

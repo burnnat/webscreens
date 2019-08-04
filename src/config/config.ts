@@ -27,6 +27,16 @@ let argv =  yargs
 		describe: 'OurGroceries password',
 		type: 'string'
 	})
+	.option('m', {
+		alias: 'mythtv',
+		describe: 'MythTV backend hostname',
+		type: 'string'
+	})
+	.option('z', {
+		alias: 'timezone',
+		describe: 'Timezone to use for date formatting',
+		type: 'string'
+	})
 	.help()
 	.argv;
 
@@ -37,6 +47,8 @@ export default class Config {
 	public static slides: string = argv.d;
 	public static username: string = argv.u;
 	public static password: string = argv.p;
+	public static mythtv: string = argv.m;
+	public static timezone: string = argv.z;
 	public static resources = relative('../public/');
 	public static views = relative('../views/');
 	public static routes = relative('../screens/*/routes.js');

@@ -5,6 +5,9 @@ import { sync } from 'glob';
 import * as sharp from 'sharp';
 import { keys, shuffle, transform } from 'lodash';
 import { generate } from 'shortid';
+import * as TextToSVG from 'text-to-svg';
+import { ExifImage } from 'exif';
+import * as moment from 'moment-timezone';
 
 import config from '../../config/config';
 
@@ -67,6 +70,31 @@ gaze(
         });
     }
 );
+
+function getExif(image): Promise<any> {
+    return new Promise(function(resolve, reject) {
+        new ExifImage(image, function(error, data) {
+            if (error !== null) {
+                reject(error);
+            }
+            else {
+                resolve(data);
+            }
+        });
+    });
+}
+
+async function getImageDate(image) {
+    const metadata = await getExif(image);
+    const date = metadata.exif.DateTimeOriginal;
+
+    if (date != null) {
+        return moment(date, 'YYYY:MM:DD HH:mm:ss').format('MM/DD/YYYY');
+    }
+    else {
+        return null;
+    }
+}
 
 function nextImage(): string {
     index = index + 1;
@@ -143,6 +171,48 @@ export default class ImagesController {
                     resolveWithObject: true
                 });
 
+            const overlays: object[] = [
+                {
+                    input: img.data,
+                    raw: img.info
+                }
+            ];
+
+            const date = await getImageDate(file);
+
+            if (date != null) {
+                const textToSVG = TextToSVG.loadSync();
+                const textOptions = {
+                    x: 0,
+                    y: 0,
+                    fontSize: 16,
+                    anchor: 'top',
+                    attributes: {
+                        fill: 'white'
+                    }
+                };
+                
+                const svg = Buffer.from(textToSVG.getSVG(date, textOptions));
+                const svgSize = textToSVG.getMetrics(date, textOptions);
+
+                overlays.push({
+                    input: {
+                        create: {
+                            width: svgSize.width,
+                            height: svgSize.height,
+                            channels: 4,
+                            background: '#111A'
+                        }
+                    },
+                    gravity: 'southwest'
+                });
+
+                overlays.push({
+                    input: svg,
+                    gravity: 'southwest'
+                });
+            }
+
             const composite = await sharp({
                     create: {
                         width,
@@ -151,12 +221,7 @@ export default class ImagesController {
                         background: '#111'
                     }
                 })
-                .composite([
-                    {
-                        input: img.data,
-                        raw: img.info
-                    }
-                ])
+                .composite(overlays)
                 .jpeg()
                 .toBuffer();
             
@@ -164,7 +229,7 @@ export default class ImagesController {
             res.send(composite);
         }
         catch (error) {
-            console.error(`An error occurred when resizing the file '${id}': ${error}`);
+            console.error(`An error occurred when resizing the file '${id}':`, error);
 
             // If we can't rotate/resize for some reason just send the file as-is.
             res.sendFile(file);

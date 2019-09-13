@@ -49,8 +49,11 @@ export default class PhotosController {
     private idToFile: StringMap;
     private playlist: string[];
     private index: number;
+    private stampSize: number;
 
     public constructor(data: PhotosConfig) {
+        this.stampSize = data.stampSize || 16;
+
         const source = path.resolve(data.directory);
 
         console.log(`Loading slideshow from directory: ${source}`);
@@ -200,7 +203,7 @@ export default class PhotosController {
                 const textOptions = {
                     x: 0,
                     y: 0,
-                    fontSize: 16,
+                    fontSize: this.stampSize,
                     anchor: 'top',
                     attributes: {
                         fill: 'white'

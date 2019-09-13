@@ -3,6 +3,7 @@ import PhotosController from './controller';
 
 export interface PhotosConfig {
 	directory: string;
+	stampSize: number;
 }
 
 export default function setup(app: Express, config: PhotosConfig) {

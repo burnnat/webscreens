@@ -1,9 +1,14 @@
 import { Express } from 'express';
-import { tvController } from './controller';
+import TvController from './controller';
 
-export default class TvRoute {
-	constructor(app: Express) {
-		app.route('/tv')
-			.get(tvController.index);
-	}
+export interface TvConfig {
+    timezone: string;
+    hostname: string;
+}
+
+export default function setup(app: Express, config: TvConfig) {
+	const controller = new TvController(config);
+	
+	app.route('/tv')
+		.get(controller.index.bind(controller));
 }

@@ -8,68 +8,11 @@ import { generate } from 'shortid';
 import * as TextToSVG from 'text-to-svg';
 import { ExifImage } from 'exif';
 import * as moment from 'moment-timezone';
-
-import config from '../../config/config';
-
-const source = path.resolve(config.slides);
-
-console.log(`Loading slideshow from directory: ${source}`);
-
-const filepattern = path.join(source, '**/*.jpg');
-
-const fileToId = {};
-const idToFile = {};
-
-sync(filepattern, { nocase: true }).forEach((filename) => {
-    const id = generate();
-
-    fileToId[filename] = id;
-    idToFile[id] = filename;
-});
+import { PhotosConfig } from './routes';
 
 function randomIndex(length: number) {
     return Math.floor(Math.random() * length);
 }
-
-// TODO (#2): create a playlist per connection/session, to guarantee
-// good independent shuffling for multiple clients.
-let playlist: string[] = shuffle(fileToId);
-let index = 0;
-
-gaze(
-    path.relative(process.cwd(), filepattern),
-    (err, watcher) => {
-        watcher.on('added', (filepath) => {
-            console.log(`File added: ${filepath}`);
-            const id = generate();
-
-            fileToId[filepath] = id;
-            idToFile[id] = filepath;
-
-            let location = randomIndex(playlist.length + 1);
-            playlist.splice(location, 0, id);
-
-            if (location < index) {
-                index = index + 1;
-            }
-        });
-
-        watcher.on('deleted', (filepath) => {
-            console.log(`File deleted: ${filepath}`);
-            const id = fileToId[filepath];
-
-            delete fileToId[filepath];
-            delete idToFile[id];
-            
-            let location = playlist.indexOf(id);
-            playlist.splice(location, 1);
-
-            if (location < index) {
-                index = index - 1;
-            }
-        });
-    }
-);
 
 function getExif(image): Promise<any> {
     return new Promise(function(resolve, reject) {
@@ -96,42 +39,114 @@ async function getImageDate(image) {
     }
 }
 
-function nextImage(): string {
-    index = index + 1;
-    
-    if (index >= playlist.length) {
-        console.log(`End of playlist reached. Reshuffling...`);
-        const previous = playlist[index - 1];
+interface StringMap {
+    [key: string]: string;
+}
 
-        playlist = shuffle(fileToId);
-        index = 0;
+export default class PhotosController {
 
-        // When looping, ensure that the first item in the next playlist is not
-        // the same as the last item in the previous playlist (otherwise the same
-        // item would appear twice in a row).
-        if (playlist[0] === previous) {
-            const replacement = randomIndex(playlist.length - 1) + 1;
-            playlist[0] = playlist[replacement];
-            playlist[replacement] = previous;
+    private fileToId: StringMap;
+    private idToFile: StringMap;
+    private playlist: string[];
+    private index: number;
+
+    public constructor(data: PhotosConfig) {
+        const source = path.resolve(data.directory);
+
+        console.log(`Loading slideshow from directory: ${source}`);
+
+        const filepattern = path.join(source, '**/*.jpg');
+
+        this.fileToId = {};
+        this.idToFile = {};
+
+        sync(filepattern, { nocase: true }).forEach((filename) => {
+            const id = generate();
+
+            this.fileToId[filename] = id;
+            this.idToFile[id] = filename;
+        });
+
+        // TODO (#2): create a playlist per connection/session, to guarantee
+        // good independent shuffling for multiple clients.
+        this.playlist = shuffle(this.fileToId);
+        this.index = 0;
+
+        gaze(
+            path.relative(process.cwd(), filepattern),
+            (err, watcher) => {
+                watcher.on('added', (filepath) => this.handleAdd(filepath));
+                watcher.on('deleted', (filepath) => this.handleDelete(filepath));
+            }
+        );
+
+    }
+
+    private handleAdd(filepath) {
+        console.log(`File added: ${filepath}`);
+        const id = generate();
+
+        this.fileToId[filepath] = id;
+        this.idToFile[id] = filepath;
+
+        let location = randomIndex(this.playlist.length + 1);
+        this.playlist.splice(location, 0, id);
+
+        if (location < this.index) {
+            this.index = this.index + 1;
         }
     }
 
-    const id = playlist[index];
-    const file = idToFile[id];
+    private handleDelete(filepath) {
+        console.log(`File deleted: ${filepath}`);
+        const id = this.fileToId[filepath];
 
-    console.log(`Next image: ${id} (${file})`);
+        delete this.fileToId[filepath];
+        delete this.idToFile[id];
+        
+        let location = this.playlist.indexOf(id);
+        this.playlist.splice(location, 1);
 
-    return id;
-}
+        if (location < this.index) {
+            this.index = this.index - 1;
+        }
+    }
 
-export default class ImagesController {
+    private nextImage(): string {
+        this.index = this.index + 1;
+        
+        if (this.index >= this.playlist.length) {
+            console.log(`End of playlist reached. Reshuffling...`);
+            const previous = this.playlist[this.index - 1];
+    
+            this.playlist = shuffle(this.fileToId);
+            this.index = 0;
+    
+            // When looping, ensure that the first item in the next playlist is not
+            // the same as the last item in the previous playlist (otherwise the same
+            // item would appear twice in a row).
+            if (this.playlist[0] === previous) {
+                const replacement = randomIndex(this.playlist.length - 1) + 1;
+                this.playlist[0] = this.playlist[replacement];
+                this.playlist[replacement] = previous;
+            }
+        }
+    
+        const id = this.playlist[this.index];
+        const file = this.idToFile[id];
+    
+        console.log(`Next image: ${id} (${file})`);
+    
+        return id;
+    }
+
     public next(req: Request, res: Response): void {
-        res.json({ value: nextImage() });
+        res.json({ value: this.nextImage() });
     }
 
     public async image(req: Request, res: Response): Promise<void> {
         const id = req.params.id;
-        const file = idToFile[id];
+        const file = this.idToFile[id];
 
         try {
             const buffer = await sharp(file)
@@ -154,8 +169,8 @@ export default class ImagesController {
         const width = parseInt(req.query.width, 10);
         const height = parseInt(req.query.height, 10);
 
-        const id = nextImage();
-        const file = idToFile[id];
+        const id = this.nextImage();
+        const file = this.idToFile[id];
 
         try {
             const img = await sharp(file)
@@ -236,5 +251,3 @@ export default class ImagesController {
         }
     }
 }
-
-export const imagesController = new ImagesController();

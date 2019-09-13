@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import config from '../../config/config';
 import * as OurGroceriesClient from 'our-groceries-client';
+import { ShoppingConfig } from './routes';
 
 function customPromisify(object, key) {
     const method = object[key];
@@ -35,11 +35,20 @@ function createClient() {
 }
 
 export default class ShoppingController {
+
+    private username: string;
+    private password: string;
+
+    public constructor(data: ShoppingConfig) {
+        this.username = data.username;
+        this.password = data.password;
+    }
+
     public async index(req: Request, res: Response): Promise<void> {
         const listName = req.query.list;
         const client = createClient();
         
-        await client.authenticate(config.username, config.password);
+        await client.authenticate(this.username, this.password);
         const lists = await client.getLists();
 
         const details = await Promise.all(
@@ -68,5 +77,3 @@ export default class ShoppingController {
         );
     }
 }
-
-export const shoppingController = new ShoppingController();

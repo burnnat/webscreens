@@ -1,15 +1,19 @@
 import { Express } from 'express';
-import { imagesController } from './controller';
+import PhotosController from './controller';
 
-export default class StaticRoute {
-	constructor(app: Express) {
-		app.route('/photos/static')
-			.get(imagesController.indexStatic);
+export interface PhotosConfig {
+	directory: string;
+}
+
+export default function setup(app: Express, config: PhotosConfig) {
+	const controller = new PhotosController(config);
+
+	app.route('/photos/static')
+		.get(controller.indexStatic.bind(controller));
+	
+	app.route('/photos/api/next')
+		.get(controller.next.bind(controller));
 		
-		app.route('/photos/api/next')
-			.get(imagesController.next);
-			
-		app.route('/photos/api/image/:id')
-			.get(imagesController.image);
-	}
+	app.route('/photos/api/image/:id')
+		.get(controller.image.bind(controller));
 }

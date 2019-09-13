@@ -24,8 +24,9 @@ export default function() {
 
     for (let route of config.globFiles(config.routes)) {
         const location = path.resolve(route);
-        console.log(`Loading routes from: ${location}`);
-        require(location).default(app);
+        const screen = path.basename(path.dirname(location));
+        console.log(`Loading routes for screen '${screen}' from: ${location}`);
+        require(location).default(app, config.configForScreen(screen));
     }
 
     app.use((req: express.Request, res: express.Response, next: Function): void => {

@@ -1,12 +1,7 @@
 import { Request, Response } from 'express';
 import { backend, backendSettings } from 'mythtv-services-api';
 import * as moment from 'moment-timezone';
-
-import config from '../../config/config';
-
-function parseDate(input: string) {
-    return moment.utc(input).tz(config.timezone);
-}
+import { TvConfig } from './routes';
 
 function formatDuration(startTime, endTime) {
     const duration = endTime.diff(startTime, 'minutes');
@@ -39,9 +34,22 @@ function formatDuration(startTime, endTime) {
 }
 
 export default class TvController {
+
+    private timezone: string;
+    private hostname: string;
+
+    public constructor(data: TvConfig) {
+        this.timezone = data.timezone;
+        this.hostname = data.hostname;
+    }
+
+    private parseDate(input: string) {
+        return moment.utc(input).tz(this.timezone);
+    }
+    
     public async index(req: Request, res: Response): Promise<void> {
         backendSettings({
-            hostname: config.mythtv,
+            hostname: this.hostname,
             port: 6544,
             protocol: 'http'
         });
@@ -52,8 +60,8 @@ export default class TvController {
         programList
             .Programs
             .forEach((program) => {
-                const startTime = parseDate((program as any).StartTime);
-                const endTime = parseDate((program as any).EndTime);
+                const startTime = this.parseDate((program as any).StartTime);
+                const endTime = this.parseDate((program as any).EndTime);
                 const date = startTime.format('dddd, MMMM Do');
                 
                 if (!programsByDate[date]) {
@@ -82,5 +90,3 @@ export default class TvController {
         );
     }
 }
-
-export const tvController = new TvController();

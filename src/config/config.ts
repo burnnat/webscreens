@@ -1,58 +1,56 @@
+import * as fs from 'fs';
 import * as path from 'path';
 import { sync } from 'glob';
 import { union } from 'lodash';
 import * as yargs from 'yargs'
 
 let argv =  yargs
-	.config()
 	.option('b', {
 		alias: 'port',
 		default: 3000,
 		describe: 'Port to bind on',
 		type: 'number'
 	})
-	.option('d', {
-		alias: 'directory',
-		default: '.',
-		describe: 'Directory of slideshow images',
-		type: 'string'
-	})
-	.option('u', {
-		alias: 'username',
-		describe: 'OurGroceries username',
-		type: 'string'
-	})
-	.option('p', {
-		alias: 'password',
-		describe: 'OurGroceries password',
-		type: 'string'
-	})
-	.option('m', {
-		alias: 'mythtv',
-		describe: 'MythTV backend hostname',
-		type: 'string'
-	})
-	.option('z', {
-		alias: 'timezone',
-		describe: 'Timezone to use for date formatting',
-		type: 'string'
+	.option('c', {
+		alias: 'config',
+		describe: 'Path to config file',
+		type: 'string',
+		demandOption: true
 	})
 	.help()
 	.argv;
 
 const relative = (location) => path.join(__dirname, location);
 
-export default class Config {
-	public static port: number = argv.b;
-	public static slides: string = argv.d;
-	public static username: string = argv.u;
-	public static password: string = argv.p;
-	public static mythtv: string = argv.m;
-	public static timezone: string = argv.z;
-	public static resources = relative('../public/');
-	public static views = relative('../views/');
-	public static routes = relative('../screens/*/routes.js');
-	public static globFiles(location: string): string[] {
+class Config {
+	private data: {
+		[screen: string]: any;
+	};
+
+	public port: number;
+	public resources: string;
+	public views: string;
+	public routes: string;
+	
+	constructor(data) {
+		this.port = argv.b;
+		this.data = data;
+
+		this.resources = relative('../public/');
+		this.views = relative('../views/');
+		this.routes = relative('../screens/*/routes.js');
+	}
+
+	globFiles(location: string): string[] {
 		return union([], sync(location));
 	}
+
+	configForScreen(screen: string) {
+		return this.data[screen];
+	}
 }
+
+const data = JSON.parse(fs.readFileSync(argv.config, 'utf8'));
+const instance = new Config(data);
+
+export default instance;

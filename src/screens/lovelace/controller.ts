@@ -5,37 +5,36 @@ import { LovelaceConfig } from './routes';
 export default class LovelaceController {
 
     private url: string;
-    private browser: any;
+    private browser: Promise<any>;
 
     public constructor(data: LovelaceConfig) {
-        this.url = data.url;
-    }
-
-    private async initBrowser() {
-        if (!this.browser) {
-            this.browser = await puppeteer.launch({
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
-            });
-        }
-
-        return this.browser;
+        this.url = data.url + (data.url.endsWith('/') ? '' : '/');
+        this.browser = puppeteer.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            env: {
+                TZ: data.timezone,
+                ...process.env
+            }
+        });
     }
 
     public async index(req: Request, res: Response): Promise<void> {
-        // const dashboard = req.query.dashboard;
+        const dashboard = this.url + req.query.dashboard;
         const width = parseInt(req.query.width, 10);
         const height = parseInt(req.query.height, 10);
+        const zoom = req.query.zoom != null ? parseFloat(req.query.zoom) : 1;
 
-        const browser = await this.initBrowser();
+        const browser = await this.browser;
         const page = await browser.newPage();
 
+        await page.goto(dashboard);
+
         await page.setViewport({
-            width,
-            height,
-            deviceScaleFactor: 1
+            width:  Math.floor(width / zoom),
+            height: Math.floor(height / zoom),
+            deviceScaleFactor: zoom
         });
 
-        await page.goto(this.url);
         await page.waitForSelector('ha-authorize, home-assistant');
 
         const root = await page.$eval('ha-authorize, home-assistant', (el) => el.tagName.toLowerCase());

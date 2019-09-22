@@ -5,17 +5,28 @@ import { LovelaceConfig } from './routes';
 export default class LovelaceController {
 
     private url: string;
+    private timezone: string;
     private browser: Promise<any>;
 
     public constructor(data: LovelaceConfig) {
         this.url = data.url + (data.url.endsWith('/') ? '' : '/');
+        this.timezone = data.timezone;
+        this.init();
+    }
+
+    private async init() {
         this.browser = puppeteer.launch({
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
             env: {
-                TZ: data.timezone,
+                TZ: this.timezone,
                 ...process.env
             }
         });
+
+        const browser = await this.browser;
+
+        console.log(`Started Puppeteer with pid ${browser.process().pid}`);
+        browser.on('disconnected', () => this.init());
     }
 
     public async index(req: Request, res: Response): Promise<void> {

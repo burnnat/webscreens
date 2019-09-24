@@ -6,17 +6,19 @@ export default class LovelaceController {
 
     private url: string;
     private timezone: string;
+    private delay: number;
     private browser: Promise<any>;
 
     public constructor(data: LovelaceConfig) {
         this.url = data.url + (data.url.endsWith('/') ? '' : '/');
         this.timezone = data.timezone;
+        this.delay = data.screenshotDelay != null ? data.screenshotDelay : 1200;
         this.init();
     }
 
     private async init() {
         this.browser = puppeteer.launch({
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
             env: {
                 TZ: this.timezone,
                 ...process.env
@@ -38,67 +40,72 @@ export default class LovelaceController {
         const browser = await this.browser;
         const page = await browser.newPage();
 
-        await page.goto(dashboard);
+        try {
+            await page.goto(dashboard);
 
-        await page.setViewport({
-            width:  Math.floor(width / zoom),
-            height: Math.floor(height / zoom),
-            deviceScaleFactor: zoom
-        });
+            await page.setViewport({
+                width:  Math.floor(width / zoom),
+                height: Math.floor(height / zoom),
+                deviceScaleFactor: zoom
+            });
 
-        await page.waitForSelector('ha-authorize, home-assistant');
+            await page.waitForSelector('ha-authorize, home-assistant');
 
-        const root = await page.$eval('ha-authorize, home-assistant', (el) => el.tagName.toLowerCase());
+            const root = await page.$eval('ha-authorize, home-assistant', (el) => el.tagName.toLowerCase());
 
-        // Check for login dialog and trigger login flow if present.
-        if (root === 'ha-authorize') {
-            const localButton: any = await page.evaluateHandle(
-                `
-                Array.from(
-                    document
-                        .querySelector("ha-authorize").shadowRoot
-                        .querySelector("ha-pick-auth-provider").shadowRoot
-                        .querySelectorAll("paper-item")
-                ).find((el) => el.textContent.includes('Trusted Networks'))
-                ` as any);
-            await localButton.click();
+            // Check for login dialog and trigger login flow if present.
+            if (root === 'ha-authorize') {
+                const localButton: any = await page.evaluateHandle(
+                    `
+                    Array.from(
+                        document
+                            .querySelector("ha-authorize").shadowRoot
+                            .querySelector("ha-pick-auth-provider").shadowRoot
+                            .querySelectorAll("paper-item")
+                    ).find((el) => el.textContent.includes('Trusted Networks'))
+                    ` as any);
+                await localButton.click();
 
-            await page.waitForSelector('home-assistant')
-            await page.waitFor(
-                () => (
-                    document
-                        .querySelector("home-assistant").shadowRoot
-                        .querySelector("ha-store-auth-card")
-                )
-            );
+                await page.waitForSelector('home-assistant')
+                await page.waitFor(
+                    () => (
+                        document
+                            .querySelector("home-assistant").shadowRoot
+                            .querySelector("ha-store-auth-card")
+                    )
+                );
 
-            const saveButton: any = await page.evaluateHandle(
-                `
-                Array.from(
-                    document
-                        .querySelector("home-assistant").shadowRoot
-                        .querySelector("ha-store-auth-card").shadowRoot
-                        .querySelectorAll("mwc-button")
-                ).find((el) => el.textContent.includes('Save login'))
-                ` as any);
-            await saveButton.click();
+                const saveButton: any = await page.evaluateHandle(
+                    `
+                    Array.from(
+                        document
+                            .querySelector("home-assistant").shadowRoot
+                            .querySelector("ha-store-auth-card").shadowRoot
+                            .querySelectorAll("mwc-button")
+                    ).find((el) => el.textContent.includes('Save login'))
+                    ` as any);
+                await saveButton.click();
 
-            await page.waitFor(
-                () => (
-                    !document
-                        .querySelector("home-assistant").shadowRoot
-                        .querySelector("ha-store-auth-card")
-                )
-            );
+                await page.waitFor(
+                    () => (
+                        !document
+                            .querySelector("home-assistant").shadowRoot
+                            .querySelector("ha-store-auth-card")
+                    )
+                );
+            }
+
+            await page.waitFor(this.delay);
+
+            const buffer = await page.screenshot({
+                type: 'png'
+            });
+
+            res.contentType('image/png');
+            res.send(buffer);
         }
-
-        await page.waitFor(1000);
-
-        const buffer = await page.screenshot({
-            type: 'png'
-        });
-    
-        res.contentType('image/png');
-        res.send(buffer);
+        finally {
+            await page.close();
+        }
     }
 }

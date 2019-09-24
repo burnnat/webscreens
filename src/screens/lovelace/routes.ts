@@ -4,6 +4,7 @@ import LovelaceController from './controller';
 export interface LovelaceConfig {
 	url: string;
 	timezone: string;
+	screenshotDelay: number;
 }
 
 export default function setup(app: Express, config: LovelaceConfig) {

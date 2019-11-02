@@ -33,7 +33,7 @@
     "glob": "^5.0.14",
     "lodash": "^4.17.15",
     "moment-timezone": "^0.5.26",
-    "mongoose": "^4.11.1",
+    "mongoose": "^5.7.5",
     "morgan": "^1.6.1",
     "moveto": "^1.8.2",
     "mustache-express": "^1.2.8",

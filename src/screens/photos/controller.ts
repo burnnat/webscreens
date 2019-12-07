@@ -48,6 +48,7 @@ export default class PhotosController {
     private fileToId: StringMap;
     private idToFile: StringMap;
     private playlist: string[];
+    private previous: string;
     private index: number;
     private stampSize: number;
 
@@ -73,6 +74,7 @@ export default class PhotosController {
         // TODO (#2): create a playlist per connection/session, to guarantee
         // good independent shuffling for multiple clients.
         this.playlist = shuffle(this.fileToId);
+        this.previous = null;
         this.index = 0;
 
         gaze(
@@ -120,7 +122,7 @@ export default class PhotosController {
         
         if (this.index >= this.playlist.length) {
             console.log(`End of playlist reached. Reshuffling...`);
-            const previous = this.playlist[this.index - 1];
+            this.previous = this.playlist[this.index - 1];
     
             this.playlist = shuffle(this.fileToId);
             this.index = 0;
@@ -128,10 +130,10 @@ export default class PhotosController {
             // When looping, ensure that the first item in the next playlist is not
             // the same as the last item in the previous playlist (otherwise the same
             // item would appear twice in a row).
-            if (this.playlist[0] === previous) {
+            if (this.playlist[0] === this.previous) {
                 const replacement = randomIndex(this.playlist.length - 1) + 1;
                 this.playlist[0] = this.playlist[replacement];
-                this.playlist[replacement] = previous;
+                this.playlist[replacement] = this.previous;
             }
         }
     
@@ -141,6 +143,17 @@ export default class PhotosController {
         console.log(`Next image: ${id} (${file})`);
     
         return id;
+    }
+
+    private previousImage() {
+        const prevIndex = this.index - 1;
+
+        if (prevIndex < 0) {
+            return this.previous;
+        }
+        else {
+            return this.playlist[prevIndex];
+        }
     }
 
     public next(req: Request, res: Response): void {
@@ -168,11 +181,25 @@ export default class PhotosController {
         }
     }
 
-    public async indexStatic(req: Request, res: Response): Promise<void> {
+    public indexStatic(req: Request, res: Response) {
         const width = parseInt(req.query.width, 10);
         const height = parseInt(req.query.height, 10);
 
         const id = this.nextImage();
+
+        this.sendScaled(id, width, height, res);
+    }
+
+    public previousStatic(req: Request, res: Response) {
+        const width = parseInt(req.query.width, 10);
+        const height = parseInt(req.query.height, 10);
+
+        const id = this.previousImage();
+
+        this.sendScaled(id, width, height, res);
+    }
+
+    private async sendScaled(id: string, width: number, height: number, res: Response): Promise<void>  {
         const file = this.idToFile[id];
 
         try {

@@ -11,6 +11,9 @@ export default function setup(app: Express, config: PhotosConfig) {
 
 	app.route('/photos/static')
 		.get(controller.indexStatic.bind(controller));
+
+	app.route('/photos/static/previous')
+		.get(controller.previousStatic.bind(controller));
 	
 	app.route('/photos/api/next')
 		.get(controller.next.bind(controller));

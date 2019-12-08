@@ -145,6 +145,10 @@ export default class PhotosController {
         return id;
     }
 
+    private currentImage() {
+        return this.playlist[this.index];
+    }
+
     private previousImage() {
         const prevIndex = this.index - 1;
 
@@ -185,7 +189,13 @@ export default class PhotosController {
         const width = parseInt(req.query.width, 10);
         const height = parseInt(req.query.height, 10);
 
-        const id = this.nextImage();
+        // Only actual GET requests should advance the image, others
+        // like HEAD requests will simply return the current image.
+        const id = (
+            req.method === 'GET'
+                ? this.nextImage()
+                : this.currentImage()
+        );
 
         this.sendScaled(id, width, height, res);
     }

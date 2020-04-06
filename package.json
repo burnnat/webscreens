@@ -1,6 +1,6 @@
 {
   "name": "webscreens",
-  "version": "0.0.17",
+  "version": "0.1.0",
   "description": "Display simple web slideshows and dashboards intended for full screen display.",
   "license": "GPL-3.0",
   "repository": {

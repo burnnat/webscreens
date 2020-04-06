@@ -39,6 +39,7 @@ export default class LovelaceController {
 
         const browser = await this.browser;
         const page = await browser.newPage();
+        page.setDefaultTimeout(5000);
 
         try {
             await page.goto(dashboard);
@@ -82,7 +83,7 @@ export default class LovelaceController {
                             .querySelector("home-assistant").shadowRoot
                             .querySelector("ha-store-auth-card").shadowRoot
                             .querySelectorAll("mwc-button")
-                    ).find((el) => el.textContent.includes('Save login'))
+                    ).find((el) => el.textContent.includes('Yes'))
                     ` as any);
                 await saveButton.click();
 
@@ -96,15 +97,15 @@ export default class LovelaceController {
             }
 
             await page.waitFor(this.delay);
-
+        }
+        finally {
             const buffer = await page.screenshot({
                 type: 'png'
             });
 
             res.contentType('image/png');
             res.send(buffer);
-        }
-        finally {
+
             await page.close();
         }
     }

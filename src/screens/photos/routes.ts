@@ -3,6 +3,7 @@ import PhotosController from './controller';
 
 export interface PhotosConfig {
 	directory: string;
+	exclude?: string[];
 	stampSize: number;
 }
 

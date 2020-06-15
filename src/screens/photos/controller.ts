@@ -45,6 +45,7 @@ interface StringMap {
 
 export default class PhotosController {
 
+    private excluded: string[];
     private fileToId: StringMap;
     private idToFile: StringMap;
     private playlist: string[];
@@ -61,10 +62,26 @@ export default class PhotosController {
 
         const filepattern = path.join(source, '**/*.jpg');
 
+        this.excluded = (
+            data.exclude
+                ? data
+                    .exclude
+                    .map(dir => {
+                        const resolved = path.resolve(dir);
+                        console.log(`Excluding files from directory: ${resolved}`)
+                        return resolved;
+                    })
+                : []
+        );
+
         this.fileToId = {};
         this.idToFile = {};
 
         sync(filepattern, { nocase: true }).forEach((filename) => {
+            if (this.isExcluded(filename)) {
+                return;
+            }
+
             const id = generate();
 
             this.fileToId[filename] = id;
@@ -87,7 +104,18 @@ export default class PhotosController {
 
     }
 
+    private isExcluded(target: string): boolean {
+        return this.excluded.some((exclude) => {
+            const relative = path.relative(exclude, target);
+            return !!relative && relative.split(path.sep)[0] != '..' && !path.isAbsolute(relative);
+        })
+    }
+
     private handleAdd(filepath) {
+        if (this.isExcluded(filepath)) {
+            return;
+        }
+
         console.log(`File added: ${filepath}`);
         const id = generate();
 

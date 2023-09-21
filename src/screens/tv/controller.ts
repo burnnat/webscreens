@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { backend, backendSettings } from 'mythtv-services-api';
-import * as moment from 'moment-timezone';
-import { TvConfig } from './routes';
+import { masterBackend, masterBackendSettings } from 'mythtv-services-api';
+import moment from 'moment-timezone';
+import { TvConfig } from './routes.js';
 
 function formatDuration(startTime, endTime) {
     const duration = endTime.diff(startTime, 'minutes');
@@ -33,6 +33,11 @@ function formatDuration(startTime, endTime) {
     return result;
 }
 
+interface Program {
+    name: string;
+    items: string[];
+}
+
 export default class TvController {
 
     private timezone: string;
@@ -48,13 +53,9 @@ export default class TvController {
     }
     
     public async index(req: Request, res: Response): Promise<void> {
-        backendSettings({
-            hostname: this.hostname,
-            port: 6544,
-            protocol: 'http'
-        });
-        
-        const programList = await backend.dvrService.GetUpcomingList({});
+        masterBackendSettings(new URL(`http://${this.hostname}:6544`));
+
+        const programList = await masterBackend.dvrService.GetUpcomingList({});
         const programsByDate = {};
 
         programList
@@ -75,7 +76,7 @@ export default class TvController {
                 programsByDate[date].push(`${title} (${time}, ${duration})`);
             });
 
-        const model = [];
+        const model: Program[] = [];
 
         for (let date in programsByDate) {
             model.push({

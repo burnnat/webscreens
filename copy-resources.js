@@ -1,6 +1,6 @@
-const path = require('path');
-const fs = require('fs-extra');
-const glob = require('glob');
+import path from 'path';
+import fs from 'fs-extra';
+import { glob } from 'glob';
 
 // Copy static resources
 fs.ensureDirSync('dist/public');

@@ -1,5 +1,5 @@
 import { Express } from 'express';
-import LovelaceController from './controller';
+import LovelaceController from './controller.js';
 
 export interface LovelaceConfig {
 	url: string;

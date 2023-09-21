@@ -1,5 +1,5 @@
 import { Express } from 'express';
-import ShoppingController from './controller';
+import ShoppingController from './controller.js';
 
 export interface ShoppingConfig {
     username: string;

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import * as OurGroceriesClient from 'our-groceries-client';
-import { ShoppingConfig } from './routes';
+import OurGroceriesClient from 'our-groceries-client';
+import { ShoppingConfig } from './routes.js';
 
 function customPromisify(object, key) {
     const method = object[key];

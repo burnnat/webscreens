@@ -1,26 +1,29 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { sync } from 'glob';
-import { union } from 'lodash';
-import * as yargs from 'yargs'
+import union from 'lodash/union.js';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
-let argv =  yargs
-	.option('b', {
-		alias: 'port',
-		default: 3000,
-		describe: 'Port to bind on',
-		type: 'number'
-	})
-	.option('c', {
-		alias: 'config',
-		describe: 'Path to config file',
-		type: 'string',
-		demandOption: true
-	})
-	.help()
-	.argv;
+let argv = (
+	yargs(hideBin(process.argv))
+		.option('b', {
+			alias: 'port',
+			default: 3000,
+			describe: 'Port to bind on',
+			type: 'number'
+		})
+		.option('c', {
+			alias: 'config',
+			describe: 'Path to config file',
+			type: 'string',
+			demandOption: true
+		})
+		.help()
+		.argv
+);
 
-const relative = (location) => path.join(__dirname, location);
+const relative = (location: string) => fileURLToPath(new URL(location, import.meta.url));
 
 class Config {
 	private data: {

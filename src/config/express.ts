@@ -1,12 +1,12 @@
-import * as bodyParser from 'body-parser';
-import config from './config';
-import * as cookieParser from 'cookie-parser';
-import * as express from 'express';
-import * as logger from 'morgan';
-import * as mustacheExpress from 'mustache-express';
-import * as path from 'path';
+import bodyParser from 'body-parser';
+import config from './config.js';
+import cookieParser from 'cookie-parser';
+import express from 'express';
+import logger from 'morgan';
+import mustacheExpress from 'mustache-express';
+import path from 'path';
 
-export default function() {
+export default async function() {
     var app: express.Express = express();
 
     app.engine('html', mustacheExpress());
@@ -26,7 +26,8 @@ export default function() {
         const location = path.resolve(route);
         const screen = path.basename(path.dirname(location));
         console.log(`Loading routes for screen '${screen}' from: ${location}`);
-        require(location).default(app, config.configForScreen(screen));
+        const module = await import(location);
+        module.default(app, config.configForScreen(screen));
     }
 
     app.use((req: express.Request, res: express.Response, next: Function): void => {

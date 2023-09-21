@@ -1,14 +1,14 @@
-import * as path from 'path';
+import path from 'path';
 import { Request, Response } from 'express';
-import * as gaze from 'gaze';
+import gaze from 'gaze';
 import { sync } from 'glob';
-import * as sharp from 'sharp';
-import { keys, shuffle, transform } from 'lodash';
-import { generate } from 'shortid';
-import * as TextToSVG from 'text-to-svg';
-import { ExifImage } from 'exif';
-import * as moment from 'moment-timezone';
-import { PhotosConfig } from './routes';
+import sharp from 'sharp';
+import shuffle from 'lodash/shuffle.js';
+import { nanoid } from 'nanoid';
+import TextToSVG from 'text-to-svg';
+import exif from 'exif';
+import moment from 'moment-timezone';
+import { PhotosConfig } from './routes.js';
 
 function randomIndex(length: number) {
     return Math.floor(Math.random() * length);
@@ -16,7 +16,7 @@ function randomIndex(length: number) {
 
 function getExif(image): Promise<any> {
     return new Promise(function(resolve, reject) {
-        new ExifImage(image, function(error, data) {
+        new exif.ExifImage(image, function(error, data) {
             if (error !== null) {
                 reject(error);
             }
@@ -49,7 +49,7 @@ export default class PhotosController {
     private fileToId: StringMap;
     private idToFile: StringMap;
     private playlist: string[];
-    private previous: string;
+    private previous: string | null;
     private index: number;
     private stampSize: number;
 
@@ -82,7 +82,7 @@ export default class PhotosController {
                 return;
             }
 
-            const id = generate();
+            const id = nanoid();
 
             this.fileToId[filename] = id;
             this.idToFile[id] = filename;
@@ -117,7 +117,7 @@ export default class PhotosController {
         }
 
         console.log(`File added: ${filepath}`);
-        const id = generate();
+        const id = nanoid();
 
         this.fileToId[filepath] = id;
         this.idToFile[id] = filepath;
@@ -214,8 +214,8 @@ export default class PhotosController {
     }
 
     public indexStatic(req: Request, res: Response) {
-        const width = parseInt(req.query.width, 10);
-        const height = parseInt(req.query.height, 10);
+        const width = parseInt(req.query.width as string, 10);
+        const height = parseInt(req.query.height as string, 10);
 
         // Only actual GET requests should advance the image, others
         // like HEAD requests will simply return the current image.
@@ -229,12 +229,17 @@ export default class PhotosController {
     }
 
     public previousStatic(req: Request, res: Response) {
-        const width = parseInt(req.query.width, 10);
-        const height = parseInt(req.query.height, 10);
+        const width = parseInt(req.query.width as string, 10);
+        const height = parseInt(req.query.height as string, 10);
 
         const id = this.previousImage();
-
-        this.sendScaled(id, width, height, res);
+        
+        if (id != null) {
+            this.sendScaled(id, width, height, res);
+        }
+        else {
+            res.status(404).send('No previous image exists.');
+        }
     }
 
     private async sendScaled(id: string, width: number, height: number, res: Response): Promise<void>  {

@@ -1,10 +1,10 @@
-import * as http from 'http';
+import http from 'http';
 
-import express from './config/express';
-import config from './config/config';
+import express from './config/express.js';
+import config from './config/config.js';
 
-export function start() {
-  const app = express();
+export async function start() {
+  const app = await express();
 
   const server: http.Server = new http.Server(app);
 

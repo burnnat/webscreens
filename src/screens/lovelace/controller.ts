@@ -1,18 +1,19 @@
 import { Request, Response } from 'express';
-import * as puppeteer from 'puppeteer';
-import { LovelaceConfig } from './routes';
+import puppeteer from 'puppeteer';
+import { LovelaceConfig } from './routes.js';
 
 export default class LovelaceController {
 
     private url: string;
     private timezone: string;
     private delay: number;
-    private browser: Promise<any>;
+    private browser: Promise<any> | null;
 
     public constructor(data: LovelaceConfig) {
         this.url = data.url + (data.url.endsWith('/') ? '' : '/');
         this.timezone = data.timezone;
         this.delay = data.screenshotDelay != null ? data.screenshotDelay : 1200;
+        this.browser = null;
         this.init();
     }
 
@@ -33,9 +34,9 @@ export default class LovelaceController {
 
     public async index(req: Request, res: Response): Promise<void> {
         const dashboard = this.url + req.query.dashboard;
-        const width = parseInt(req.query.width, 10);
-        const height = parseInt(req.query.height, 10);
-        const zoom = req.query.zoom != null ? parseFloat(req.query.zoom) : 1;
+        const width = parseInt(req.query.width as string, 10);
+        const height = parseInt(req.query.height as string, 10);
+        const zoom = req.query.zoom != null ? parseFloat(req.query.zoom as string) : 1;
 
         const browser = await this.browser;
         const page = await browser.newPage();
@@ -71,8 +72,9 @@ export default class LovelaceController {
                 await page.waitFor(
                     () => (
                         document
-                            .querySelector("home-assistant").shadowRoot
-                            .querySelector("ha-store-auth-card")
+                            .querySelector("home-assistant")
+                            ?.shadowRoot
+                            ?.querySelector("ha-store-auth-card")
                     )
                 );
 
@@ -90,8 +92,9 @@ export default class LovelaceController {
                 await page.waitFor(
                     () => (
                         !document
-                            .querySelector("home-assistant").shadowRoot
-                            .querySelector("ha-store-auth-card")
+                            .querySelector("home-assistant")
+                            ?.shadowRoot
+                            ?.querySelector("ha-store-auth-card")
                     )
                 );
             }

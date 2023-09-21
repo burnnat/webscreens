@@ -1,5 +1,5 @@
 import { Express } from 'express';
-import TvController from './controller';
+import TvController from './controller.js';
 
 export interface TvConfig {
     timezone: string;

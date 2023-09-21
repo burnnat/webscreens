@@ -1,5 +1,5 @@
 import { Express } from 'express';
-import PhotosController from './controller';
+import PhotosController from './controller.js';
 
 export interface PhotosConfig {
 	directory: string;

@@ -1,18 +1,17 @@
 {
     "compileOnSave": false,
+    "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
         "sourceMap": true,
         "declaration": false,
-        "moduleResolution": "node",
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
-        "target": "es5",
         "typeRoots": [
             "node_modules/@types"
         ],
+        "noImplicitAny": false,
         "lib": [
-            "es2016",
-            "dom"
+            "DOM"
         ]
     }
 }

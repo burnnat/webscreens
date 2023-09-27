@@ -5,9 +5,15 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
-  body-parser:
-    specifier: ^1.20.2
-    version: 1.20.2
+  ask-sdk-core:
+    specifier: ^2.14.0
+    version: 2.14.0(ask-sdk-model@1.86.0)
+  ask-sdk-express-adapter:
+    specifier: ^2.14.0
+    version: 2.14.0(ask-sdk-core@2.14.0)
+  ask-sdk-model:
+    specifier: ^1.86.0
+    version: 1.86.0
   cookie-parser:
     specifier: ~1.4.6
     version: 1.4.6
@@ -449,6 +455,36 @@ packages:
 
   /array-flatten@1.1.1:
     resolution: {integrity: sha512-PCVAQswWemu6UdxsDFFX/+gVeYqKAod3D3UVm91jHwynguOwAvYPhx8nNlM++NqRcK6CxxpUafjmhIdKiHibqg==}
+    dev: false
+
+  /ask-sdk-core@2.14.0(ask-sdk-model@1.86.0):
+    resolution: {integrity: sha512-G2yEKbY+XYTFzJXGRpsg7xJHqqgBcgnKEgklXUMRWRFv10gwHgtWDLLlBV6h4IdysTx782rCVJK/UcHcaGbEpA==}
+    peerDependencies:
+      ask-sdk-model: ^1.29.0
+    dependencies:
+      ask-sdk-model: 1.86.0
+      ask-sdk-runtime: 2.14.0
+    dev: false
+
+  /ask-sdk-express-adapter@2.14.0(ask-sdk-core@2.14.0):
+    resolution: {integrity: sha512-F4mNK1/z0opcqe6Kz5n2SR06U3pjyGka6HaTOXYuzQ9jDu5xJ71w4ws0wPgYWMq+Yp0HGvW8XaLSdzoyGCsb8w==}
+    peerDependencies:
+      ask-sdk-core: ^2.7.0
+    dependencies:
+      ask-sdk-core: 2.14.0(ask-sdk-model@1.86.0)
+      body-parser: 1.20.2
+      node-forge: 1.3.1
+      semver: 7.5.4
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /ask-sdk-model@1.86.0:
+    resolution: {integrity: sha512-JmC5mypPBz5Q1Yx1WyeAr2Q/z2Cjm98EjLjTlYAolXF4gokU7fDDjeOAyAD5dkyHjyGLeCEvlC0MJYWFwc84dw==}
+    dev: false
+
+  /ask-sdk-runtime@2.14.0:
+    resolution: {integrity: sha512-a96pPs1RU3GgXBHplqAVqh2uxEuSYjTD5+XSbHsf6Fz4KhHpgaxJogOIIybjA6O/d1B9sG+6bjHJGzxBJEcccA==}
     dev: false
 
   /asn1@0.2.6:
@@ -1931,6 +1967,11 @@ packages:
         optional: true
     dependencies:
       whatwg-url: 5.0.0
+    dev: false
+
+  /node-forge@1.3.1:
+    resolution: {integrity: sha512-dPEtOeMvF9VMcYV/1Wb8CPoVAXtp6MKMlcbAt4ddqmGqUJ6fQZFXkNZNkNlfevtNkGtaSoXf/vNNNSvgrdXwtA==}
+    engines: {node: '>= 6.13.0'}
     dev: false
 
   /node-mocks-http@1.13.0:

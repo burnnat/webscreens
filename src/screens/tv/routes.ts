@@ -1,4 +1,4 @@
-import { Express } from 'express';
+import { Router } from 'express';
 import TvController from './controller.js';
 
 export interface TvConfig {
@@ -6,9 +6,9 @@ export interface TvConfig {
     hostname: string;
 }
 
-export default function setup(app: Express, config: TvConfig) {
+export default function setup(router: Router, config: TvConfig) {
 	const controller = new TvController(config);
 	
-	app.route('/tv')
+	router.route('/')
 		.get(controller.index.bind(controller));
 }

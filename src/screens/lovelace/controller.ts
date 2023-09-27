@@ -20,6 +20,7 @@ export default class LovelaceController {
     private async init() {
         this.browser = puppeteer.launch({
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+            headless: 'new',
             env: {
                 TZ: this.timezone,
                 ...process.env

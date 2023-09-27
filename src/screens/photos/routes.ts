@@ -1,4 +1,6 @@
-import { Express } from 'express';
+import { ExpressAdapter } from 'ask-sdk-express-adapter';
+import { Router } from 'express';
+import { handler } from './alexa.js';
 import PhotosController from './controller.js';
 
 export interface PhotosConfig {
@@ -7,18 +9,21 @@ export interface PhotosConfig {
 	stampSize: number;
 }
 
-export default function setup(app: Express, config: PhotosConfig) {
+export default function setup(router: Router, config: PhotosConfig) {
 	const controller = new PhotosController(config);
 
-	app.route('/photos/static')
+	router.route('/static')
 		.get(controller.indexStatic.bind(controller));
 
-	app.route('/photos/static/previous')
+	router.route('/static/previous')
 		.get(controller.previousStatic.bind(controller));
 	
-	app.route('/photos/api/next')
+	router.route('/api/next')
 		.get(controller.next.bind(controller));
 		
-	app.route('/photos/api/image/:id')
+	router.route('/api/image/:id')
 		.get(controller.image.bind(controller));
+	
+	router.route('/api/alexa')
+		.post(...new ExpressAdapter(handler, true, true).getRequestHandlers());
 }

@@ -1,4 +1,4 @@
-import { Express } from 'express';
+import { Router } from 'express';
 import LovelaceController from './controller.js';
 
 export interface LovelaceConfig {
@@ -7,9 +7,9 @@ export interface LovelaceConfig {
 	screenshotDelay: number;
 }
 
-export default function setup(app: Express, config: LovelaceConfig) {
+export default function setup(router: Router, config: LovelaceConfig) {
 	const controller = new LovelaceController(config);
 
-	app.route('/lovelace')
+	router.route('/')
 		.get(controller.index.bind(controller));
 }

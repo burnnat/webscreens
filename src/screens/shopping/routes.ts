@@ -1,14 +1,14 @@
-import { Express } from 'express';
+import { Router } from 'express';
 import ShoppingController from './controller.js';
 
 export interface ShoppingConfig {
-    username: string;
-    password: string;
+	username: string;
+	password: string;
 }
 
-export default function setup(app: Express, config: ShoppingConfig) {
+export default function setup(router: Router, config: ShoppingConfig) {
 	const controller = new ShoppingController(config);
 	
-	app.route('/shopping')
+	router.route('/')
 		.get(controller.index.bind(controller));
 }

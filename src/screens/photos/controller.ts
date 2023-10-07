@@ -1,18 +1,9 @@
-import path from 'path';
 import { Request, Response } from 'express';
-import gaze from 'gaze';
-import { sync } from 'glob';
 import sharp from 'sharp';
-import shuffle from 'lodash/shuffle.js';
-import { nanoid } from 'nanoid';
 import TextToSVG from 'text-to-svg';
 import exif from 'exif';
 import moment from 'moment-timezone';
-import { PhotosConfig } from './routes.js';
-
-function randomIndex(length: number) {
-    return Math.floor(Math.random() * length);
-}
+import { PhotosPlayer } from './player.js';
 
 function getExif(image): Promise<any> {
     return new Promise(function(resolve, reject) {
@@ -39,162 +30,27 @@ async function getImageDate(image) {
     }
 }
 
-interface StringMap {
-    [key: string]: string;
+export interface PhotosControllerOptions {
+    stampSize: number;
 }
 
-export default class PhotosController {
+export class PhotosController {
 
-    private excluded: string[];
-    private fileToId: StringMap;
-    private idToFile: StringMap;
-    private playlist: string[];
-    private previous: string | null;
-    private index: number;
     private stampSize: number;
+    private player: PhotosPlayer;
 
-    public constructor(data: PhotosConfig) {
+    public constructor(player: PhotosPlayer, data: PhotosControllerOptions) {
+        this.player = player;
         this.stampSize = data.stampSize || 16;
-
-        const source = path.resolve(data.directory);
-
-        console.log(`Loading slideshow from directory: ${source}`);
-
-        const filepattern = path.join(source, '**/*.jpg');
-
-        this.excluded = (
-            data.exclude
-                ? data
-                    .exclude
-                    .map(dir => {
-                        const resolved = path.resolve(dir);
-                        console.log(`Excluding files from directory: ${resolved}`)
-                        return resolved;
-                    })
-                : []
-        );
-
-        this.fileToId = {};
-        this.idToFile = {};
-
-        sync(filepattern, { nocase: true }).forEach((filename) => {
-            if (this.isExcluded(filename)) {
-                return;
-            }
-
-            const id = nanoid();
-
-            this.fileToId[filename] = id;
-            this.idToFile[id] = filename;
-        });
-
-        // TODO (#2): create a playlist per connection/session, to guarantee
-        // good independent shuffling for multiple clients.
-        this.playlist = shuffle(this.fileToId);
-        this.previous = null;
-        this.index = 0;
-
-        gaze(
-            path.relative(process.cwd(), filepattern),
-            (err, watcher) => {
-                watcher.on('added', (filepath) => this.handleAdd(filepath));
-                watcher.on('deleted', (filepath) => this.handleDelete(filepath));
-            }
-        );
-
-    }
-
-    private isExcluded(target: string): boolean {
-        return this.excluded.some((exclude) => {
-            const relative = path.relative(exclude, target);
-            return !!relative && relative.split(path.sep)[0] != '..' && !path.isAbsolute(relative);
-        })
-    }
-
-    private handleAdd(filepath) {
-        if (this.isExcluded(filepath)) {
-            return;
-        }
-
-        console.log(`File added: ${filepath}`);
-        const id = nanoid();
-
-        this.fileToId[filepath] = id;
-        this.idToFile[id] = filepath;
-
-        let location = randomIndex(this.playlist.length + 1);
-        this.playlist.splice(location, 0, id);
-
-        if (location < this.index) {
-            this.index = this.index + 1;
-        }
-    }
-
-    private handleDelete(filepath) {
-        console.log(`File deleted: ${filepath}`);
-        const id = this.fileToId[filepath];
-
-        delete this.fileToId[filepath];
-        delete this.idToFile[id];
-        
-        let location = this.playlist.indexOf(id);
-        this.playlist.splice(location, 1);
-
-        if (location < this.index) {
-            this.index = this.index - 1;
-        }
-    }
-
-    private nextImage(): string {
-        this.index = this.index + 1;
-        
-        if (this.index >= this.playlist.length) {
-            console.log(`End of playlist reached. Reshuffling...`);
-            this.previous = this.playlist[this.index - 1];
-    
-            this.playlist = shuffle(this.fileToId);
-            this.index = 0;
-    
-            // When looping, ensure that the first item in the next playlist is not
-            // the same as the last item in the previous playlist (otherwise the same
-            // item would appear twice in a row).
-            if (this.playlist[0] === this.previous) {
-                const replacement = randomIndex(this.playlist.length - 1) + 1;
-                this.playlist[0] = this.playlist[replacement];
-                this.playlist[replacement] = this.previous;
-            }
-        }
-    
-        const id = this.playlist[this.index];
-        const file = this.idToFile[id];
-    
-        console.log(`Next image: ${id} (${file})`);
-    
-        return id;
-    }
-
-    private currentImage() {
-        return this.playlist[this.index];
-    }
-
-    private previousImage() {
-        const prevIndex = this.index - 1;
-
-        if (prevIndex < 0) {
-            return this.previous;
-        }
-        else {
-            return this.playlist[prevIndex];
-        }
     }
 
     public next(req: Request, res: Response): void {
-        res.json({ value: this.nextImage() });
+        res.json({ value: this.player.nextImage() });
     }
 
     public async image(req: Request, res: Response): Promise<void> {
         const id = req.params.id;
-        const file = this.idToFile[id];
+        const file = this.player.getFile(id);
 
         try {
             const buffer = await sharp(file)
@@ -221,8 +77,8 @@ export default class PhotosController {
         // like HEAD requests will simply return the current image.
         const id = (
             req.method === 'GET'
-                ? this.nextImage()
-                : this.currentImage()
+                ? this.player.nextImage()
+                : this.player.currentImage()
         );
 
         this.sendScaled(id, width, height, res);
@@ -232,7 +88,7 @@ export default class PhotosController {
         const width = parseInt(req.query.width as string, 10);
         const height = parseInt(req.query.height as string, 10);
 
-        const id = this.previousImage();
+        const id = this.player.previousImage();
         
         if (id != null) {
             this.sendScaled(id, width, height, res);
@@ -243,7 +99,7 @@ export default class PhotosController {
     }
 
     private async sendScaled(id: string, width: number, height: number, res: Response): Promise<void>  {
-        const file = this.idToFile[id];
+        const file = this.player.getFile(id);
 
         try {
             const img = await sharp(file)

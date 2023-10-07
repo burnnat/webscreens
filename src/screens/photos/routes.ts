@@ -1,16 +1,19 @@
 import { ExpressAdapter } from 'ask-sdk-express-adapter';
 import { Router } from 'express';
-import { handler } from './alexa.js';
-import PhotosController from './controller.js';
+import { createSkill, PhotosSkillOptions } from './alexa.js';
+import { PhotosController, PhotosControllerOptions } from './controller.js';
+import { PhotosPlayer, PhotosPlayerOptions } from './player.js';
 
-export interface PhotosConfig {
-	directory: string;
-	exclude?: string[];
-	stampSize: number;
-}
+export type PhotosConfig = (
+	PhotosPlayerOptions &
+	PhotosControllerOptions &
+	PhotosSkillOptions
+);
 
 export default function setup(router: Router, config: PhotosConfig) {
-	const controller = new PhotosController(config);
+	const player = new PhotosPlayer(config);
+	const controller = new PhotosController(player, config);
+	const skill = createSkill(player, config);
 
 	router.route('/static')
 		.get(controller.indexStatic.bind(controller));
@@ -25,5 +28,5 @@ export default function setup(router: Router, config: PhotosConfig) {
 		.get(controller.image.bind(controller));
 	
 	router.route('/api/alexa')
-		.post(...new ExpressAdapter(handler, true, true).getRequestHandlers());
+		.post(...new ExpressAdapter(skill, true, true).getRequestHandlers());
 }
